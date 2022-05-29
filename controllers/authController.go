@@ -1,11 +1,17 @@
 package controllers
 
 import (
+	"strconv"
+	"time"
+
 	"github.com/RakibSiddiquee/golang-chat-jwt-auth/database"
 	"github.com/RakibSiddiquee/golang-chat-jwt-auth/models"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
 )
+
+const SecretKey = "secret"
 
 // Register is used to register a user
 func Register(c *fiber.Ctx) error {
@@ -53,5 +59,33 @@ func Login(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.JSON(user)
+	// Create token
+	expireTime := time.Now().Add(time.Hour * 24) //1 day
+
+	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
+		Issuer:    strconv.Itoa(int(user.Id)),
+		ExpiresAt: expireTime.Unix(),
+	})
+
+	token, err := claims.SignedString([]byte(SecretKey))
+
+	if err != nil {
+		c.Status(fiber.StatusInternalServerError)
+		return c.JSON(fiber.Map{
+			"message": "Could not login",
+		})
+	}
+
+	cookie := fiber.Cookie{
+		Name:     "jwt",
+		Value:    token,
+		Expires:  expireTime,
+		HTTPOnly: true,
+	}
+
+	c.Cookie(&cookie)
+
+	return c.JSON(fiber.Map{
+		"message": "success",
+	})
 }
