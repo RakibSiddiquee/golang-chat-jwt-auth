@@ -13,6 +13,8 @@ import (
 
 const SecretKey = "secret"
 
+var IsLoggedIn = false
+
 // Register is used to register a user
 func Register(c *fiber.Ctx) error {
 	var data map[string]string
@@ -86,6 +88,8 @@ func Login(c *fiber.Ctx) error {
 
 	c.Cookie(&cookie)
 
+	IsLoggedIn = true
+
 	return c.JSON(fiber.Map{
 		"message": "success",
 	})
@@ -124,6 +128,7 @@ func Logout(c *fiber.Ctx) error {
 	}
 
 	c.Cookie(&cookie)
+	IsLoggedIn = false
 
 	return c.JSON(fiber.Map{
 		"message": "success",
